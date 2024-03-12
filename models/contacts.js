@@ -1,14 +1,74 @@
-// const fs = require('fs/promises')
+const fs = require("fs").promises;
+const path = require("path");
+const { v4: uuidv4 } = require("uuid");
 
-const listContacts = async () => {}
+const contactsPath = path.join(__dirname, "models", "contacts.json");
 
-const getContactById = async (contactId) => {}
+const listContacts = async () => {
+  try {
+    const data = await fs.readFile(contactsPath);
+    return JSON.parse(data);
+  } catch (error) {
+    return error;
+  }
+};
 
-const removeContact = async (contactId) => {}
+const getContactById = async (contactId) => {
+  try {
+    const contacts = await listContacts();
+    const contact = contacts.find((c) => c.id === contactId);
+    if (!contact) {
+      throw new Error("Contact not found");
+    }
+    return contact;
+  } catch (error) {
+    return error;
+  }
+};
 
-const addContact = async (body) => {}
+const removeContact = async (contactId) => {
+  try {
+    const contacts = await listContacts();
+    const updateContacts = contacts.filter((c) => c.id !== contactId);
+    if (contacts.length === updateContacts.length) {
+      throw new Error("Contact not found");
+    }
+    await fs.writeFile(contactsPath, JSON.stringify(updateContacts, null, 2));
+  } catch (error) {
+    return error;
+  }
+};
 
-const updateContact = async (contactId, body) => {}
+const addContact = async ({ name, email, phone }) => {
+  try {
+    const contacts = await listContacts();
+    const newContact = { id: uuidv4(), name, email, phone };
+    contacts.push(newContact);
+    await fs.writeFile(contactsPath, JSON.stringify(contacts, null, 2));
+    return newContact;
+  } catch (error) {
+    return error;
+  }
+};
+
+const updateContact = async (contactId, { name, email, phone }) => {
+  try {
+    const contacts = await listContacts();
+    const updateContacts = contacts.map((c) => {
+      if (c.id === contactId) {
+        return { ...c, name, email, phone };
+      }
+      return c;
+    });
+    if (contacts.length === updateContacts.length) {
+      throw new Error("Contact not found");
+    }
+    await fs.writeFile(contactsPath, JSON.stringify(updateContacts, null, 2));
+    return updateContacts.find((c) => c.id === contactId);
+  } catch (error) {
+    return error;
+  }
+};
 
 module.exports = {
   listContacts,
@@ -16,4 +76,4 @@ module.exports = {
   removeContact,
   addContact,
   updateContact,
-}
+};
