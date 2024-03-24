@@ -47,6 +47,7 @@ router.post("/api/contacts", async (req, res, next) => {
 router.delete("/api/contacts/:id", async (req, res, next) => {
   try {
     const deleteContact = await contacts.removeContact(req.params.id);
+    res.json({ message: "Contact deleted" });
     res.json(deleteContact);
   } catch (error) {
     res.status(404).json({ message: "Not found" });

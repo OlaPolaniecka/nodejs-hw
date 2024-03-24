@@ -10,6 +10,7 @@ const listContacts = async () => {
     return JSON.parse(data);
   } catch (error) {
     console.log(error);
+    throw error;
   }
 };
 
@@ -23,6 +24,7 @@ const getContactById = async (contactId) => {
     return contact;
   } catch (error) {
     console.log(error);
+    throw error;
   }
 };
 
@@ -36,6 +38,7 @@ const removeContact = async (contactId) => {
     await fs.writeFile(contactsPath, JSON.stringify(updateContacts, null, 2));
   } catch (error) {
     console.log(error);
+    throw error;
   }
 };
 
@@ -48,6 +51,7 @@ const addContact = async ({ name, email, phone }) => {
     return newContact;
   } catch (error) {
     console.log(error);
+    throw error;
   }
 };
 
@@ -67,6 +71,7 @@ const updateContact = async (contactId, { name, email, phone }) => {
     return updateContacts.find((c) => c.id === contactId);
   } catch (error) {
     console.log(error);
+    throw error;
   }
 };
 
