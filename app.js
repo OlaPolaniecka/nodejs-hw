@@ -12,7 +12,7 @@ app.use(logger(formatsLogger));
 app.use(cors());
 app.use(express.json());
 
-app.use("./routes/api/contacts", contactsRouter);
+app.use("/contacts", contactsRouter);
 
 app.use((_, res, __) => {
   res.status(404).json({
