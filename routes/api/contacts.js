@@ -44,7 +44,7 @@ router.post("/", async (req, res, next) => {
   }
 });
 
-router.delete("/", async (req, res, next) => {
+router.delete("/:contactId", async (req, res, next) => {
   try {
     const deleteContact = await contacts.removeContact(req.params.id);
     res.json({ message: "Contact deleted" });
@@ -76,7 +76,7 @@ router.patch("/:contactId/favorite", async (req, res, next) => {
     if (favorite === undefined) {
       return res.status(400).json({ message: "missing field favorite" });
     }
-    const updatedContact = await contacts.updateFavoriteStatus(
+    const updatedContact = await contacts.findByIdAndUpdate(
       req.params.contactId,
       { favorite },
       { new: true }

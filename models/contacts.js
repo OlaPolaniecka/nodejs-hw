@@ -5,15 +5,19 @@ const contactSchema = new mongoose.Schema({
     type: String,
     required: [true, "Set name for contact"],
   },
-  email: String,
-  phone: String,
+  email: {
+    type: String,
+  },
+  phone: {
+    type: String,
+  },
   favorite: {
     type: Boolean,
     default: false,
   },
 });
 
-const Contact = mongoose.model("Contact", contactSchema);
+const Contact = mongoose.model("Contact", contactSchema, "contacts");
 
 const listContacts = async () => {
   try {
