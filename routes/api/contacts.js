@@ -1,6 +1,7 @@
 const express = require("express");
 const Joi = require("joi");
 const contacts = require("../../models/contacts");
+const auth = require("../../middleware/auth");
 
 const router = express.Router();
 
@@ -13,7 +14,7 @@ const validateContact = (contact) => {
   return schema.validate(contact);
 };
 
-router.get("/", async (req, res, next) => {
+router.get("/", auth, async (req, res, next) => {
   try {
     const allContacts = await contacts.listContacts();
     res.json(allContacts);
@@ -22,16 +23,16 @@ router.get("/", async (req, res, next) => {
   }
 });
 
-router.get("/", async (req, res, next) => {
+router.get("/:contactId", auth, async (req, res, next) => {
   try {
-    const contact = await contacts.getContactById(req.params.id);
+    const contact = await contacts.getContactById(req.params.contactId);
     res.json(contact);
   } catch (error) {
     res.status(404).json({ message: "Not found" });
   }
 });
 
-router.post("/", async (req, res, next) => {
+router.post("/", auth, async (req, res, next) => {
   try {
     const { error } = validateContact(req.body);
     if (error) {
@@ -44,9 +45,9 @@ router.post("/", async (req, res, next) => {
   }
 });
 
-router.delete("/:contactId", async (req, res, next) => {
+router.delete("/:contactId", auth, async (req, res, next) => {
   try {
-    const deleteContact = await contacts.removeContact(req.params.id);
+    const deleteContact = await contacts.removeContact(req.params.contactId);
     res.json({ message: "Contact deleted" });
     res.json(deleteContact);
   } catch (error) {
@@ -54,7 +55,7 @@ router.delete("/:contactId", async (req, res, next) => {
   }
 });
 
-router.put("/", async (req, res, next) => {
+router.put("/", auth, async (req, res, next) => {
   try {
     const { error } = validateContact(req.body);
     if (error) {
@@ -70,7 +71,7 @@ router.put("/", async (req, res, next) => {
   }
 });
 
-router.patch("/:contactId/favorite", async (req, res, next) => {
+router.patch("/:contactId/favorite", auth, async (req, res, next) => {
   try {
     const { favorite } = req.body;
     if (favorite === undefined) {
