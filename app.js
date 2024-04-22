@@ -1,6 +1,7 @@
 const express = require("express");
 const logger = require("morgan");
 const cors = require("cors");
+const path = require("path");
 
 const contactsRouter = require("./routes/api/contacts");
 const usersRouter = require("./routes/api/usersRoutes");
@@ -19,6 +20,8 @@ app.use(express.json());
 
 app.use("/contacts", contactsRouter);
 app.use("/users", usersRouter);
+
+app.use("/avatars", express.static(path.join(__dirname, "public/avatars")));
 
 app.use((_, res, __) => {
   res.status(404).json({

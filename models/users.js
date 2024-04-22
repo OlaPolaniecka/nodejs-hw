@@ -2,6 +2,10 @@ const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const Joi = require("joi");
+const gravatar = require("gravatar");
+const fs = require("fs").promises;
+const path = require("path");
+const Jimp = require("jimp");
 
 const userSchema = new mongoose.Schema({
   password: {
@@ -19,6 +23,10 @@ const userSchema = new mongoose.Schema({
     default: "starter",
   },
   token: {
+    type: String,
+    default: null,
+  },
+  avatarURL: {
     type: String,
     default: null,
   },
@@ -44,12 +52,13 @@ const signup = async (req, res) => {
     if (userExists) {
       return res.status(409).json({ message: "Email in use" });
     }
-
+    const avatarURL = gravatar.url(email, { s: "200", r: "pg", d: "mm" });
     const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = new User({
       email,
       password: hashedPassword,
       subscription: "starter",
+      avatarURL,
     });
 
     await newUser.save();
@@ -57,6 +66,7 @@ const signup = async (req, res) => {
       user: {
         email: newUser.email,
         subscription: newUser.subscription,
+        avatarURL: newUser.avatarURL,
       },
     });
   } catch (error) {
@@ -101,6 +111,7 @@ const login = async (req, res) => {
       user: {
         email: user.email,
         subscription: user.subscription,
+        avatarURL: user.avatarURL,
       },
     });
   } catch (error) {
@@ -139,9 +150,31 @@ const getCurrentUser = async (req, res) => {
   }
 };
 
+const updateAvatar = async (req, res) => {
+  try {
+    const { file } = req;
+    const filePath = path.join(__dirname, "../", file.path);
+
+    const image = await Jimp.read(filePath);
+    await image.resize(250, 250).writeAsync(filePath);
+
+    const publicAvatarPath = `public/avatars/${file.filename}`;
+    await fs.rename(filePath, path.join(__dirname, "../", publicAvatarPath));
+
+    const avatarURL = `/avatars/${file.filename}`;
+    await User.findByIdAndUpdate(req.user._id, { avatarURL });
+
+    res.json({ avatarURL });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Could not update avatar" });
+  }
+};
+
 module.exports = {
   signup,
   login,
   logout,
   getCurrentUser,
+  updateAvatar,
 };
