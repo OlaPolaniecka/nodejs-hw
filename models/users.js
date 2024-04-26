@@ -6,6 +6,8 @@ const gravatar = require("gravatar");
 const fs = require("fs").promises;
 const path = require("path");
 const Jimp = require("jimp");
+const mail = require("./mail");
+const { v4: uuidv4 } = require("uuid");
 
 const userSchema = new mongoose.Schema({
   password: {
@@ -30,6 +32,14 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: null,
   },
+  verify: {
+    type: Boolean,
+    default: false,
+  },
+  verificationToken: {
+    type: String,
+    required: [true, "Verify token is required"],
+  },
 });
 
 const User = mongoose.model("User", userSchema);
@@ -52,21 +62,27 @@ const signup = async (req, res) => {
     if (userExists) {
       return res.status(409).json({ message: "Email in use" });
     }
+
     const avatarURL = gravatar.url(email, { s: "200", r: "pg", d: "mm" });
     const hashedPassword = await bcrypt.hash(password, 10);
+    const verificationToken = uuidv4();
     const newUser = new User({
       email,
       password: hashedPassword,
       subscription: "starter",
       avatarURL,
+      verify: false,
+      verificationToken,
     });
 
     await newUser.save();
+    mail.sendVerificationEmail(email, verificationToken);
     res.status(201).json({
       user: {
         email: newUser.email,
         subscription: newUser.subscription,
         avatarURL: newUser.avatarURL,
+        verificationToken: newUser.verificationToken,
       },
     });
   } catch (error) {
@@ -171,10 +187,37 @@ const updateAvatar = async (req, res) => {
   }
 };
 
+const resendVerificationEmail = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ message: "missing required field email" });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (user.verify) {
+      return res
+        .status(400)
+        .json({ message: "Verification has already been passed" });
+    }
+
+    mail.sendVerificationEmail(email, user.verificationToken);
+
+    res.status(200).json({ message: "Verification email sent" });
+  } catch (error) {
+    res.status(500).json({ message: error.message || "Internal server error" });
+  }
+};
+
 module.exports = {
   signup,
   login,
   logout,
   getCurrentUser,
   updateAvatar,
+  resendVerificationEmail,
 };
